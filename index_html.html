@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="dark">
+  <title>정수연 | 회계 &amp; 스펙 인터랙티브 계산기 포트폴리오</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root {
+      box-sizing: border-box;
+      padding-top: env(safe-area-inset-top, 0px);
+      padding-bottom: env(safe-area-inset-bottom, 0px);
+      background: #020617;
+    }
+    html { scroll-padding-top: env(safe-area-inset-top, 0px); }
+    body { background: #020617; }
+
+    .calc-key {
+      transition: transform 0.12s ease, box-shadow 0.12s ease, background-color 0.15s ease;
+      box-shadow: 0 4px 0 rgba(0,0,0,0.4);
+    }
+    .calc-key:active {
+      transform: translateY(3px);
+      box-shadow: 0 1px 0 rgba(0,0,0,0.4);
+    }
+    .calc-key:focus-visible, input:focus-visible {
+      outline: 2px solid #6ee7b7;
+      outline-offset: 2px;
+    }
+    .calc-key.is-active {
+      outline: 2px solid #ecfdf5;
+      outline-offset: 2px;
+    }
+
+    @keyframes panelIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .panel-in { animation: panelIn 0.35s cubic-bezier(0.16, 1, 0.3, 1); }
+
+    @media (prefers-reduced-motion: reduce) {
+      .panel-in { animation: none; }
+      .calc-key { transition: none; }
+      .animate-pulse, .animate-ping { animation: none; }
+    }
+  </style>
+</head>
+<body class="text-slate-100 min-h-screen font-sans flex flex-col justify-between p-4 md:p-8">
+
+  <!-- 상단 -->
+  <header class="max-w-7xl mx-auto w-full flex justify-between items-center pb-6 border-b border-slate-800">
+    <div class="flex items-center gap-3">
+      <span class="text-3xl" aria-hidden="true">🧮</span>
+      <div>
+        <h1 class="text-xl font-bold text-white tracking-wide">정수연 PORTFOLIO</h1>
+        <p class="text-xs text-emerald-400 font-mono">ACCOUNTING &amp; DATA CALCULATOR</p>
+      </div>
+    </div>
+    <div class="text-right text-xs text-slate-400 hidden sm:block">
+      <p><span class="text-emerald-400 font-bold">GPA 4.42</span> / 4.5 | 3+ YEARS EXP</p>
+      <p class="text-slate-500">재경관리사 · 전산세무2급 · 토익스피킹 AL</p>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto w-full my-auto py-6">
+    <div class="grid lg:grid-cols-12 gap-8 items-start">
+
+      <!-- [좌측] 계산기 -->
+      <section aria-label="계산기" class="lg:col-span-5 bg-slate-900 border-2 border-slate-700/80 p-6 rounded-3xl shadow-2xl space-y-5">
+
+        <div class="flex justify-between items-center px-1">
+          <span class="text-xs font-mono tracking-widest text-emerald-400/80 font-bold">JUNG SUYEON FX-2026</span>
+          <div class="flex gap-1.5 bg-amber-950/60 p-1.5 rounded-md border border-amber-800/50" aria-hidden="true">
+            <div class="w-3.5 h-2.5 bg-amber-600/80 rounded-sm"></div>
+            <div class="w-3.5 h-2.5 bg-amber-600/80 rounded-sm"></div>
+            <div class="w-3.5 h-2.5 bg-amber-600/80 rounded-sm"></div>
+            <span class="text-[9px] text-amber-400 font-mono ml-1 font-bold">SOLAR</span>
+          </div>
+        </div>
+
+        <!-- LCD -->
+        <div class="bg-[#022c22] border-2 border-emerald-500/40 rounded-2xl p-5 min-h-[140px] flex flex-col justify-between font-mono shadow-inner" role="status" aria-live="polite">
+          <div class="flex justify-between text-xs text-emerald-400/70 border-b border-emerald-900/60 pb-1.5">
+            <span id="lcd-category">MODE: SELECT KEY</span>
+            <span class="text-emerald-400 animate-pulse font-bold">● ACTIVE</span>
+          </div>
+          <div class="my-2">
+            <p id="lcd-title" class="text-lg font-bold text-emerald-300">버튼을 눌러주세요</p>
+            <p id="lcd-subtitle" class="text-xs text-emerald-400/80 mt-1 truncate">아래 키를 누르면 상세 내용이 열립니다.</p>
+          </div>
+          <div class="text-right overflow-hidden">
+            <span id="lcd-stat" class="text-2xl font-extrabold text-emerald-400 tracking-wider whitespace-nowrap">0</span>
+          </div>
+        </div>
+
+        <p class="text-xs text-slate-400 text-center font-medium">
+          💡 분야 키를 누르면 오른쪽(모바일은 아래)에 상세 리포트가 열리고, 숫자 키로 실제 계산도 할 수 있어요
+        </p>
+
+        <!-- 분야 키 -->
+        <div class="grid grid-cols-2 gap-2 text-xs font-bold" id="topic-keys">
+          <button data-key="profile"     class="calc-key bg-emerald-600 hover:bg-emerald-500 text-white py-3 px-3 rounded-xl">🎓 프로필 / 학점</button>
+          <button data-key="exp"         class="calc-key bg-teal-600 hover:bg-teal-500 text-white py-3 px-3 rounded-xl">💼 3년 실무경력</button>
+          <button data-key="improvement" class="calc-key bg-blue-600 hover:bg-blue-500 text-white py-3 px-3 rounded-xl">⚡ 업무개선 (50%↓)</button>
+          <button data-key="strength"    class="calc-key bg-indigo-600 hover:bg-indigo-500 text-white py-3 px-3 rounded-xl">🔍 핵심 강점 4가지</button>
+          <button data-key="project"     class="calc-key bg-purple-600 hover:bg-purple-500 text-white py-3 px-3 rounded-xl">🚀 롯데 eLive 프로젝트</button>
+          <button data-key="cert"        class="calc-key bg-amber-700 hover:bg-amber-600 text-white py-3 px-3 rounded-xl">🏆 보유 자격증</button>
+          <button data-key="life"        class="calc-key bg-rose-700 hover:bg-rose-600 text-white py-3 px-3 rounded-xl">🧁 OFF THE WORK</button>
+          <button data-key="goal"        class="calc-key bg-cyan-700 hover:bg-cyan-600 text-white py-3 px-3 rounded-xl">🎯 커리어 목표</button>
+          <button data-key="contact"     class="calc-key bg-slate-600 hover:bg-slate-500 text-white py-3 px-3 rounded-xl">📬 연락하기</button>
+          <button data-key="all"         class="calc-key bg-emerald-500 hover:bg-emerald-400 text-slate-950 py-3 px-3 rounded-xl">📋 전체 요약 =</button>
+        </div>
+
+        <!-- 실제 동작하는 숫자 키패드 -->
+        <div class="grid grid-cols-4 gap-2 pt-3 border-t border-slate-800 text-sm font-mono" id="num-pad">
+          <button data-act="clear" aria-label="전체 지우기" class="calc-key bg-rose-900/80 hover:bg-rose-800 text-rose-200 py-2.5 rounded-lg font-bold">C</button>
+          <button data-act="back"  aria-label="한 글자 지우기" class="calc-key bg-slate-700 hover:bg-slate-600 text-slate-200 py-2.5 rounded-lg font-bold">⌫</button>
+          <button data-op="/" aria-label="나누기" class="calc-key bg-slate-700 hover:bg-slate-600 text-emerald-300 py-2.5 rounded-lg font-bold">÷</button>
+          <button data-op="*" aria-label="곱하기" class="calc-key bg-slate-700 hover:bg-slate-600 text-emerald-300 py-2.5 rounded-lg font-bold">×</button>
+
+          <button data-d="7" class="calc-key bg-slate-800 hover:bg-slate-700 text-slate-200 py-2.5 rounded-lg font-bold">7</button>
+          <button data-d="8" class="calc-key bg-slate-800 hover:bg-slate-700 text-slate-200 py-2.5 rounded-lg font-bold">8</button>
+          <button data-d="9" class="calc-key bg-slate-800 hover:bg-slate-700 text-slate-200 py-2.5 rounded-lg font-bold">9</button>
+          <button data-op="-" aria-label="빼기" class="calc-key bg-slate-700 hover:bg-slate-600 text-emerald-300 py-2.5 rounded-lg font-bold">−</button>
+
+          <button data-d="4" class="calc-key bg-slate-800 hover:bg-slate-700 text-slate-200 py-2.5 rounded-lg font-bold">4</button>
+          <button data-d="5" class="calc-key bg-slate-800 hover:bg-slate-700 text-slate-200 py-2.5 rounded-lg font-bold">5</button>
+          <button data-d="6" class="calc-key bg-slate-800 hover:bg-slate-700 text-slate-200 py-2.5 rounded-lg font-bold">6</button>
+          <button data-op="+" aria-label="더하기" class="calc-key bg-slate-700 hover:bg-slate-600 text-emerald-300 py-2.5 rounded-lg font-bold">+</button>
+
+          <button data-d="1" class="calc-key bg-slate-800 hover:bg-slate-700 text-slate-200 py-2.5 rounded-lg font-bold">1</button>
+          <button data-d="2" class="calc-key bg-slate-800 hover:bg-slate-700 text-slate-200 py-2.5 rounded-lg font-bold">2</button>
+          <button data-d="3" class="calc-key bg-slate-800 hover:bg-slate-700 text-slate-200 py-2.5 rounded-lg font-bold">3</button>
+          <button data-act="equals" aria-label="계산하기" class="calc-key bg-emerald-500 hover:bg-emerald-400 text-slate-950 py-2.5 rounded-lg font-bold row-span-2 text-lg">=</button>
+
+          <button data-d="0" class="calc-key bg-slate-800 hover:bg-slate-700 text-slate-200 py-2.5 rounded-lg font-bold col-span-2">0</button>
+          <button data-d="." class="calc-key bg-slate-800 hover:bg-slate-700 text-slate-200 py-2.5 rounded-lg font-bold">.</button>
+        </div>
+      </section>
+
+      <!-- [우측] 상세 패널 -->
+      <section id="detail-card" aria-label="상세 리포트" class="lg:col-span-7 bg-slate-900/90 border-2 border-emerald-500/50 p-6 md:p-8 rounded-3xl shadow-2xl min-h-[580px] flex flex-col justify-between">
+        <div>
+          <div class="flex justify-between items-center border-b border-slate-800 pb-4 mb-6">
+            <span id="panel-tag" class="text-xs font-mono font-bold text-emerald-400 bg-emerald-950 border border-emerald-800 px-3 py-1 rounded-full">
+              ACTIVE MODE: ALL SUMMARY
+            </span>
+            <span class="text-xs text-slate-400 font-mono flex items-center gap-1">
+              <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping" aria-hidden="true"></span> TOUCH RESPONSIVE
+            </span>
+          </div>
+          <div id="panel-content" class="space-y-6"></div>
+        </div>
+
+        <!-- 시뮬레이터 -->
+        <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 mt-6 space-y-3">
+          <div class="flex justify-between items-center text-xs text-slate-300 font-semibold gap-2">
+            <span>🧮 결산 효율 시뮬레이터 (결산 50% 단축 사례 기준)</span>
+            <span id="slider-val" class="text-emerald-400 font-mono font-bold whitespace-nowrap"></span>
+          </div>
+          <div class="grid sm:grid-cols-3 gap-4">
+            <div>
+              <label for="sim-members" class="text-[11px] text-slate-400 block mb-1">결산 담당 인원 <span id="v-members" class="text-slate-200 font-mono"></span></label>
+              <input type="range" id="sim-members" min="1" max="10" value="1" class="w-full accent-emerald-500 cursor-pointer">
+            </div>
+            <div>
+              <label for="sim-hours" class="text-[11px] text-slate-400 block mb-1">1인당 월 결산 시간 <span id="v-hours" class="text-slate-200 font-mono"></span></label>
+              <input type="range" id="sim-hours" min="10" max="200" value="60" step="5" class="w-full accent-emerald-500 cursor-pointer">
+            </div>
+            <div>
+              <label for="sim-wage" class="text-[11px] text-slate-400 block mb-1">가정 시급 <span id="v-wage" class="text-slate-200 font-mono"></span></label>
+              <input type="range" id="sim-wage" min="10000" max="40000" value="20000" step="1000" class="w-full accent-emerald-500 cursor-pointer">
+            </div>
+          </div>
+          <div class="grid grid-cols-3 gap-2 text-center">
+            <div class="bg-slate-900 border border-slate-800 rounded-xl p-2.5">
+              <span class="text-[11px] text-slate-400 block">월 절감 시간</span>
+              <span id="out-hours" class="text-base font-bold text-emerald-400 font-mono"></span>
+            </div>
+            <div class="bg-slate-900 border border-slate-800 rounded-xl p-2.5">
+              <span class="text-[11px] text-slate-400 block">월 절감 비용</span>
+              <span id="out-month" class="text-base font-bold text-cyan-400 font-mono"></span>
+            </div>
+            <div class="bg-slate-900 border border-slate-800 rounded-xl p-2.5">
+              <span class="text-[11px] text-slate-400 block">연 절감 비용</span>
+              <span id="out-year" class="text-base font-bold text-amber-400 font-mono"></span>
+            </div>
+          </div>
+          <p class="text-[11px] text-slate-500 leading-relaxed">
+            ※ 실제 개선 사례(이카운트 ERP + 엑셀 피벗, 결산 시간 약 50% 감소)를 기준으로 계산한 가정 시뮬레이션입니다. 실제 효과는 업무 환경에 따라 달라질 수 있습니다.
+          </p>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <footer class="max-w-7xl mx-auto w-full text-center text-xs text-slate-500 pt-6 border-t border-slate-800">
+    © 2026 정수연 Portfolio. All rights reserved.
+  </footer>
+
+  <script>
+    /* ===== 연락처: 값을 채우면 '연락하기' 패널에 자동으로 표시됩니다 ===== */
+    const CONTACT = {
+      email: '',      // 예: 'name@example.com'
+      phone: '',      // 예: '010-0000-0000'
+      link:  ''       // 예: 블로그 / 노션 / 링크드인 주소 (https://...)
+    };
+
+    /* ===== 상세 리포트 데이터 ===== */
+    const SUMMARY_HTML = `
+      <div class="space-y-4">
+        <div class="inline-block bg-emerald-900/40 border border-emerald-700 text-emerald-300 text-xs px-3 py-1 rounded-lg">
+          회계와 실무 경험을 바탕으로 문제를 발견하고 개선합니다
+        </div>
+        <h2 class="text-2xl font-bold text-white">안녕하세요, 회계 인재 정수연입니다.</h2>
+        <p class="text-sm text-slate-300 leading-relaxed">
+          왼쪽 계산기의 분야 키를 누르면 역량, 개선 경험, 프로젝트 등 상세 내용이 이 카드에 펼쳐집니다.
+          숫자 키로 실제 계산도 가능합니다.
+        </p>
+        <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-4">
+          <div class="bg-slate-800/80 border border-slate-700 p-4 rounded-xl text-center">
+            <span class="text-xs text-slate-400 block mb-1">학업 성적</span>
+            <span class="text-xl font-bold text-emerald-400">4.42 / 4.5</span>
+          </div>
+          <div class="bg-slate-800/80 border border-slate-700 p-4 rounded-xl text-center">
+            <span class="text-xs text-slate-400 block mb-1">실무 경력</span>
+            <span class="text-xl font-bold text-cyan-400">약 3년</span>
+          </div>
+          <div class="bg-slate-800/80 border border-slate-700 p-4 rounded-xl text-center col-span-2 sm:col-span-1">
+            <span class="text-xs text-slate-400 block mb-1">결산시간 단축</span>
+            <span class="text-xl font-bold text-amber-400">약 50% ↓</span>
+          </div>
+        </div>
+      </div>`;
+
+    function contactHtml() {
+      const rows = [];
+      if (CONTACT.email) rows.push(`<a class="block bg-slate-800 p-3 rounded-xl border border-slate-700 hover:border-emerald-500" href="mailto:${CONTACT.email}">✉️ <strong>이메일</strong> · ${CONTACT.email}</a>`);
+      if (CONTACT.phone) rows.push(`<a class="block bg-slate-800 p-3 rounded-xl border border-slate-700 hover:border-emerald-500" href="tel:${CONTACT.phone.replace(/[^0-9+]/g, '')}">📞 <strong>전화</strong> · ${CONTACT.phone}</a>`);
+      if (CONTACT.link)  rows.push(`<a class="block bg-slate-800 p-3 rounded-xl border border-slate-700 hover:border-emerald-500" href="${CONTACT.link}" target="_blank" rel="noopener">🔗 <strong>링크</strong> · ${CONTACT.link}</a>`);
+      const body = rows.length
+        ? `<div class="space-y-2 text-sm text-slate-200">${rows.join('')}</div>`
+        : `<p class="text-sm text-slate-300 bg-slate-800/60 p-4 rounded-xl border border-slate-700">연락처는 지원서에 기재된 정보를 확인해 주세요.</p>`;
+      return `
+        <div class="space-y-4">
+          <h2 class="text-2xl font-bold text-white">함께 이야기 나누고 싶습니다</h2>
+          <p class="text-sm text-slate-300">회계·재무 직무에 대한 질문이나 면접 제안은 언제든 환영합니다.</p>
+          ${body}
+        </div>`;
+    }
+
+    const DETAILS = {
+      profile: {
+        lcd: ['MODE: PROFILE & GPA', '가천대학교 회계학과', '3학년 / 학업 성취도 우수', '4.42 / 4.5'],
+        tag: 'ACTIVE KEY: 🎓 프로필 & 학점',
+        html: `
+          <div class="space-y-4">
+            <h2 class="text-2xl font-bold text-white">정수연 (Jung Soo-yeon)</h2>
+            <p class="text-sm text-emerald-400 font-semibold">"회계와 실무 경험을 바탕으로 문제를 발견하고 개선하는 사람"</p>
+            <div class="space-y-2 text-sm text-slate-300 bg-slate-800/60 p-4 rounded-xl border border-slate-700">
+              <p>• <strong>학력:</strong> 가천대학교 회계학과 3학년 재학 중</p>
+              <p>• <strong>기초 교육:</strong> 특성화고 회계과 졸업 (회계 기초 및 실무 체계 구축)</p>
+              <p>• <strong>전공 학점:</strong> <span class="text-emerald-400 font-bold">4.42 / 4.5</span></p>
+              <p>• <strong>희망 직무:</strong> 회계 · 재무</p>
+            </div>
+          </div>`
+      },
+      exp: {
+        lcd: ['MODE: WORK_EXPERIENCE', '중소기업 실무 경력', '경리, 출고, CS, 결산 총괄', '3+ YEARS'],
+        tag: 'ACTIVE KEY: 💼 3년 실무 경력',
+        html: `
+          <div class="space-y-4">
+            <h2 class="text-2xl font-bold text-white">약 3년간의 회계·일반사무 실무 경험</h2>
+            <p class="text-sm text-slate-300">시키는 일에 그치지 않고 회계 업무의 전체 흐름을 파악했습니다.</p>
+            <div class="grid sm:grid-cols-2 gap-3 text-xs text-slate-200">
+              <div class="bg-slate-800 p-3 rounded-xl border border-slate-700">
+                <strong class="text-emerald-400 block mb-1">💰 경리 &amp; 결산 업무</strong>
+                회계자료 관리, 부가세 정산 자료 정리, 매출·거래 자료 관리
+              </div>
+              <div class="bg-slate-800 p-3 rounded-xl border border-slate-700">
+                <strong class="text-cyan-400 block mb-1">📦 출고 &amp; CS 업무</strong>
+                상품 출고 프로세스 관리, 고객 문의 대응 및 운영 지원
+              </div>
+            </div>
+          </div>`
+      },
+      improvement: {
+        lcd: ['MODE: PROCESS_IMPROVEMENT', '결산 프로세스 개선', '이카운트 ERP + 엑셀 피벗 도입', '50% ↓ TIME'],
+        tag: 'ACTIVE KEY: ⚡ 업무 개선 성과',
+        html: `
+          <div class="space-y-4">
+            <h2 class="text-2xl font-bold text-white">반복적인 결산 업무 약 50% 단축</h2>
+            <p class="text-sm text-slate-300">"왜 이렇게 해야 하지?"에서 "더 효율적인 방법은 없을까?"로 이어진 대표 개선 사례입니다.</p>
+            <div class="bg-blue-950/60 border border-blue-700/60 p-4 rounded-xl space-y-3 text-xs">
+              <div>
+                <strong class="text-blue-300 text-sm block mb-1">상황 · 과제</strong>
+                <p class="text-slate-300">수작업 중심의 결산으로 야근이 반복됨 → 업무 시간 단축이 필요</p>
+              </div>
+              <div>
+                <strong class="text-blue-300 text-sm block mb-1">행동 ① 이카운트 ERP 도입 제안</strong>
+                <p class="text-slate-300">회계 프로그램 필요성을 조사하고 직접 도입·적용</p>
+              </div>
+              <div>
+                <strong class="text-blue-300 text-sm block mb-1">행동 ② 엑셀 피벗테이블 · 함수 활용</strong>
+                <p class="text-slate-300">면세/과세 데이터를 자동 구분해 정산과 부가세 작성 과정을 단순화</p>
+              </div>
+              <div class="pt-2 border-t border-blue-800 flex justify-between items-center text-sm font-bold text-emerald-400">
+                <span>결과</span>
+                <span>결산 소요 시간 약 50% 감소 · 야근 감소</span>
+              </div>
+            </div>
+            <p class="text-xs text-slate-400">아래 시뮬레이터에서 이 사례를 팀 규모에 대입해 볼 수 있어요.</p>
+          </div>`
+      },
+      strength: {
+        lcd: ['MODE: MY_STRENGTHS', '핵심 역량 4가지', '문제발견, 개선제안, 데이터, 협업', '4 STRENGTHS'],
+        tag: 'ACTIVE KEY: 🔍 핵심 강점',
+        html: `
+          <div class="space-y-4">
+            <h2 class="text-2xl font-bold text-white">4가지 핵심 강점</h2>
+            <div class="grid sm:grid-cols-2 gap-3 text-xs">
+              <div class="bg-slate-800 p-3.5 rounded-xl border border-slate-700">
+                <strong class="text-emerald-400 text-sm block mb-1">🔍 문제 발견</strong>
+                반복 업무의 불편함과 비효율을 그냥 넘기지 않습니다.
+              </div>
+              <div class="bg-slate-800 p-3.5 rounded-xl border border-slate-700">
+                <strong class="text-cyan-400 text-sm block mb-1">💡 개선 제안</strong>
+                더 나은 방식을 직접 찾아 효율적인 프로세스를 제안합니다.
+              </div>
+              <div class="bg-slate-800 p-3.5 rounded-xl border border-slate-700">
+                <strong class="text-purple-400 text-sm block mb-1">📊 데이터 활용</strong>
+                엑셀 피벗테이블과 함수로 복잡한 데이터를 목적에 맞게 정리합니다.
+              </div>
+              <div class="bg-slate-800 p-3.5 rounded-xl border border-slate-700">
+                <strong class="text-amber-400 text-sm block mb-1">🤝 협업 마인드</strong>
+                동료의 입장에서 함께 일하는 방식을 고민합니다.
+              </div>
+            </div>
+          </div>`
+      },
+      project: {
+        lcd: ['MODE: PROJECT_LOTTE', '롯데 eLive 대학대전', '상품 기획, 마케팅, 라이브커머스', 'PROJECT'],
+        tag: 'ACTIVE KEY: 🚀 주요 프로젝트',
+        html: `
+          <div class="space-y-4">
+            <h2 class="text-2xl font-bold text-white">롯데 eLive 대학대전 프로젝트</h2>
+            <p class="text-xs text-purple-300 bg-purple-950/60 p-2.5 rounded-lg border border-purple-800">
+              "상품을 단순 광고하는 것이 아니라, 상품이 필요한 상황을 보여준다."
+            </p>
+            <div class="space-y-2 text-xs text-slate-300 bg-slate-800/60 p-4 rounded-xl border border-slate-700">
+              <p>• <strong>시장 조사:</strong> 소비자 수요 조사, 경쟁 상품 분석</p>
+              <p>• <strong>상품 소싱:</strong> 후보 브랜드 발굴, 상품 선정 기준 수립</p>
+              <p>• <strong>콘텐츠 · 라이브:</strong> 릴스와 라이브커머스의 유입·구매 전환 구조 기획</p>
+            </div>
+          </div>`
+      },
+      cert: {
+        lcd: ['MODE: CERTIFICATIONS', '자격증 및 어학', '재경관리사, 세무, 토스 AL', 'CERTIFIED'],
+        tag: 'ACTIVE KEY: 🏆 보유 자격증',
+        html: `
+          <div class="space-y-4">
+            <h2 class="text-2xl font-bold text-white">전문 자격 및 어학</h2>
+            <div class="space-y-2 text-sm text-slate-200">
+              <div class="bg-slate-800 p-3 rounded-xl border border-slate-700 flex justify-between items-center">
+                <span>📑 <strong>재경관리사</strong></span><span class="text-emerald-400 font-bold text-xs">취득</span>
+              </div>
+              <div class="bg-slate-800 p-3 rounded-xl border border-slate-700 flex justify-between items-center">
+                <span>💻 <strong>전산세무 2급 · 전산회계 1급</strong></span><span class="text-emerald-400 font-bold text-xs">취득</span>
+              </div>
+              <div class="bg-slate-800 p-3 rounded-xl border border-slate-700 flex justify-between items-center">
+                <span>🗣️ <strong>토익스피킹 AL (Advanced Low)</strong></span><span class="text-indigo-400 font-bold text-xs">영어 의사소통</span>
+              </div>
+            </div>
+          </div>`
+      },
+      life: {
+        lcd: ['MODE: OFF_THE_WORK', '개인 성향 & 관심사', '베이킹, 사진, 패션, 야구', 'CREATIVE'],
+        tag: 'ACTIVE KEY: 🧁 OFF THE WORK',
+        html: `
+          <div class="space-y-4">
+            <h2 class="text-2xl font-bold text-white">OFF THE WORK</h2>
+            <div class="grid grid-cols-2 gap-2 text-xs text-slate-300">
+              <div class="bg-slate-800 p-3 rounded-xl">🧁 <strong>베이킹</strong> · 만든 것을 함께 나누는 기쁨</div>
+              <div class="bg-slate-800 p-3 rounded-xl">📷 <strong>사진</strong> · 행복한 순간의 기록</div>
+              <div class="bg-slate-800 p-3 rounded-xl">👗 <strong>패션</strong> · 가치와 이미지에 대한 관심</div>
+              <div class="bg-slate-800 p-3 rounded-xl">⚾ <strong>야구</strong> · 생생한 현장 경험 즐기기</div>
+            </div>
+          </div>`
+      },
+      goal: {
+        lcd: ['MODE: CAREER_GOAL', '커리어 목표', '숫자 너머 비즈니스 흐름을 읽다', 'VISION'],
+        tag: 'ACTIVE KEY: 🎯 커리어 목표',
+        html: `
+          <div class="space-y-4">
+            <h2 class="text-2xl font-bold text-white">비즈니스의 흐름을 이해하는 회계 인재로</h2>
+            <blockquote class="bg-slate-800 p-4 rounded-xl border-l-4 border-emerald-400 text-sm text-slate-200">
+              "숫자를 이해하는 사람에서 비즈니스의 전체 흐름을 이해하는 회계 전문가로 성장하겠습니다."
+            </blockquote>
+            <p class="text-xs text-slate-300 leading-relaxed">
+              장기적으로는 전문성을 바탕으로 데이터에 기반한 의사결정을 지원하는 인재가 되는 것이 목표입니다.
+            </p>
+          </div>`
+      },
+      contact: {
+        lcd: ['MODE: CONTACT', '연락하기', '회계 · 재무 직무 제안 환영', 'HELLO'],
+        tag: 'ACTIVE KEY: 📬 연락하기',
+        html: null // contactHtml()로 생성
+      }
+    };
+
+    /* ===== 공통 DOM 헬퍼 ===== */
+    const $ = (id) => document.getElementById(id);
+    const lcd = {
+      cat: $('lcd-category'), title: $('lcd-title'), sub: $('lcd-subtitle'), stat: $('lcd-stat')
+    };
+
+    function setLcd(cat, title, sub, stat) {
+      lcd.cat.textContent = cat;
+      lcd.title.textContent = title;
+      lcd.sub.textContent = sub;
+      setStat(stat);
+    }
+    // 긴 값이 LCD 폭을 넘지 않도록 글자 크기 자동 축소
+    function setStat(text) {
+      lcd.stat.textContent = text;
+      const len = String(text).length;
+      lcd.stat.style.fontSize = len > 16 ? '1rem' : len > 11 ? '1.25rem' : '1.5rem';
+    }
+    function renderPanel(html) {
+      const el = $('panel-content');
+      el.innerHTML = html;
+      el.classList.remove('panel-in');
+      void el.offsetWidth;
+      el.classList.add('panel-in');
+    }
+    function markActive(key) {
+      document.querySelectorAll('#topic-keys .calc-key').forEach((b) => {
+        b.classList.toggle('is-active', b.dataset.key === key);
+      });
+    }
+
+    function openDetail(key, scroll = true) {
+      if (key === 'all') return resetView();
+      const d = DETAILS[key];
+      if (!d) return;
+      setLcd(...d.lcd);
+      $('panel-tag').textContent = d.tag;
+      renderPanel(key === 'contact' ? contactHtml() : d.html);
+      markActive(key);
+      calc.fresh = true; // 다음 숫자 입력은 새 계산으로 시작
+      if (scroll && window.innerWidth < 1024) {
+        $('detail-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }
+
+    function resetView() {
+      setLcd('MODE: SELECT KEY', '버튼을 눌러주세요', '아래 키를 누르면 상세 내용이 열립니다.', '0');
+      $('panel-tag').textContent = 'ACTIVE MODE: ALL SUMMARY';
+      renderPanel(SUMMARY_HTML);
+      markActive(null);
+      calc.cur = '0'; calc.prev = null; calc.op = null; calc.fresh = true;
+    }
+
+    /* ===== 실제 동작하는 계산기 ===== */
+    const calc = { cur: '0', prev: null, op: null, fresh: true };
+    const OP_LABEL = { '+': '+', '-': '−', '*': '×', '/': '÷' };
+
+    function fmt(str) {
+      if (str === 'ERROR') return str;
+      const [i, f] = String(str).split('.');
+      const neg = i.startsWith('-');
+      const int = (neg ? i.slice(1) : i).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+      return (neg ? '-' : '') + int + (f !== undefined ? '.' + f : '');
+    }
+    function showCalc() {
+      const expr = calc.prev !== null && calc.op ? `${fmt(String(calc.prev))} ${OP_LABEL[calc.op]}` : '숫자 키로 계산해 보세요';
+      lcd.cat.textContent = 'MODE: CALCULATOR';
+      lcd.title.textContent = '회계사의 계산기';
+      lcd.sub.textContent = expr;
+      setStat(fmt(calc.cur));
+      markActive(null);
+    }
+    function operate(a, b, op) {
+      let r;
+      if (op === '+') r = a + b;
+      else if (op === '-') r = a - b;
+      else if (op === '*') r = a * b;
+      else r = b === 0 ? NaN : a / b;
+      return Number.isFinite(r) ? parseFloat(r.toFixed(8)) : NaN;
+    }
+    function inputDigit(d) {
+      if (calc.cur === 'ERROR') { calc.cur = '0'; calc.fresh = true; }
+      if (calc.fresh) {
+        calc.cur = d === '.' ? '0.' : d;
+        calc.fresh = false;
+      } else {
+        if (d === '.' && calc.cur.includes('.')) return;
+        if (calc.cur.replace(/[-.]/g, '').length >= 12) return;
+        calc.cur = (calc.cur === '0' && d !== '.') ? d : calc.cur + d;
+      }
+      showCalc();
+    }
+    function chooseOp(o) {
+      if (calc.cur === 'ERROR') return;
+      const v = parseFloat(calc.cur);
+      if (calc.prev !== null && calc.op && !calc.fresh) {
+        const r = operate(calc.prev, v, calc.op);
+        if (Number.isNaN(r)) { calc.cur = 'ERROR'; calc.prev = null; calc.op = null; calc.fresh = true; return showCalc(); }
+        calc.prev = r;
+      } else {
+        calc.prev = v;
+      }
+      calc.op = o;
+      calc.cur = String(calc.prev);
+      calc.fresh = true;
+      showCalc();
+    }
+    function equals() {
+      if (calc.op === null || calc.prev === null) return showCalc();
+      const r = operate(calc.prev, parseFloat(calc.cur), calc.op);
+      calc.cur = Number.isNaN(r) ? 'ERROR' : String(r);
+      calc.prev = null; calc.op = null; calc.fresh = true;
+      showCalc();
+    }
+    function backspace() {
+      if (calc.fresh || calc.cur === 'ERROR') return;
+      calc.cur = calc.cur.length > 1 ? calc.cur.slice(0, -1) : '0';
+      showCalc();
+    }
+    function clearCalc() {
+      calc.cur = '0'; calc.prev = null; calc.op = null; calc.fresh = true;
+      showCalc();
+    }
+
+    /* ===== 이벤트 연결 ===== */
+    $('topic-keys').addEventListener('click', (e) => {
+      const b = e.target.closest('[data-key]');
+      if (b) openDetail(b.dataset.key);
+    });
+    $('num-pad').addEventListener('click', (e) => {
+      const b = e.target.closest('button');
+      if (!b) return;
+      if (b.dataset.d !== undefined) inputDigit(b.dataset.d);
+      else if (b.dataset.op) chooseOp(b.dataset.op);
+      else if (b.dataset.act === 'equals') equals();
+      else if (b.dataset.act === 'clear') clearCalc();
+      else if (b.dataset.act === 'back') backspace();
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.target.matches('input, textarea') || e.ctrlKey || e.metaKey || e.altKey) return;
+      if (/^[0-9.]$/.test(e.key)) inputDigit(e.key);
+      else if ('+-*/'.includes(e.key) && e.key.length === 1) chooseOp(e.key);
+      else if (e.key === 'Enter' || e.key === '=') { if (!e.target.matches('button')) equals(); }
+      else if (e.key === 'Backspace') backspace();
+      else if (e.key === 'Escape' || e.key.toLowerCase() === 'c') clearCalc();
+    });
+
+    /* ===== 결산 효율 시뮬레이터 ===== */
+    const won = (n) => Math.round(n).toLocaleString('ko-KR') + '원';
+    function runSim() {
+      const members = +$('sim-members').value;
+      const hours = +$('sim-hours').value;
+      const wage = +$('sim-wage').value;
+      const savedHours = members * hours * 0.5;
+      const savedMonth = savedHours * wage;
+
+      $('v-members').textContent = members + '명';
+      $('v-hours').textContent = hours + '시간';
+      $('v-wage').textContent = wage.toLocaleString('ko-KR') + '원';
+      $('slider-val').textContent = `${members}명 × 월 ${hours}시간`;
+      $('out-hours').textContent = savedHours.toLocaleString('ko-KR') + '시간';
+      $('out-month').textContent = won(savedMonth);
+      $('out-year').textContent = won(savedMonth * 12);
+    }
+    ['sim-members', 'sim-hours', 'sim-wage'].forEach((id) => $(id).addEventListener('input', runSim));
+
+    /* ===== 초기화 ===== */
+    resetView();
+    runSim();
+  </script>
+</body>
+</html>
